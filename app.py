@@ -9,7 +9,7 @@ import qrcode
 from PIL import Image
 
 # --- Konfiguracja strony ---
-st.set_page_config(page_title="Kombajn do kodów (wersja demo)", layout="centered")
+st.set_page_config(page_title="Kombajn do kodów qr (wersja demo)", layout="centered")
 
 def create_word_file(text, extra=""):
     doc = Document()
@@ -42,7 +42,7 @@ def analyze_ean(ean):
 
 # --- Tytuł główny ---
 st.title("Kombajn do kodów qr i kreskowych")
-st.info("To jest wersja demonstracyjna. Pełna, ultraszybka wersja na komputery z systemem Windows dostępna jest na zamówienie.")
+st.info("To jest wersja demonstracyjna. Pełna, ultraszybka wersja skanująca wideo na żywo (na system Windows) jest dostępna na zamówienie.")
 
 # --- Zakładki ---
 tab1, tab2 = st.tabs(["Dekodowanie (skaner)", "Nadawanie (generator)"])
@@ -54,34 +54,38 @@ with tab1:
     
     img_file_buffer = None
     if opcja == "Zrób zdjęcie z kamery":
-        img_file_buffer = st.camera_input("Skieruj kod na kamerę")
+        img_file_buffer = st.camera_input("Skieruj kod na kamerę i kliknij 'Take Photo'")
     else:
         img_file_buffer = st.file_uploader("Wybierz zdjęcie z kodem", type=['png', 'jpg', 'jpeg'])
 
     if img_file_buffer is not None:
-        bytes_data = img_file_buffer.getvalue()
-        cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-        codes = decode(cv2_img)
+        try:
+            # Nowe, kuloodporne ładowanie obrazów
+            image = Image.open(img_file_buffer)
+            img_array = np.array(image.convert('RGB'))
+            codes = decode(img_array)
 
-        if codes:
-            dane = codes[0].data.decode("utf-8")
-            typ = codes[0].type
-            st.success(f"Rozpoznano: {typ}")
-            
-            analiza = ""
-            if typ in ['EAN13', 'EAN8', 'UPCA']:
-                analiza = analyze_ean(dane)
-            
-            st.write("**Oryginalny odczyt:**")
-            st.code(dane)
-            if analiza:
-                st.write("**Dodatkowe informacje:**")
-                st.text(analiza)
-            
-            docx_file = create_word_file(dane, analiza)
-            st.download_button("📥 Pobierz pełny raport (Word)", data=docx_file, file_name="raport_skanowania.docx")
-        else:
-            st.error("Nie wykryto kodu. Spróbuj poprawić oświetlenie.")
+            if codes:
+                dane = codes[0].data.decode("utf-8")
+                typ = codes[0].type
+                st.success(f"Rozpoznano: {typ}")
+                
+                analiza = ""
+                if typ in ['EAN13', 'EAN8', 'UPCA']:
+                    analiza = analyze_ean(dane)
+                
+                st.write("**Oryginalny odczyt:**")
+                st.code(dane)
+                if analiza:
+                    st.write("**Dodatkowe informacje:**")
+                    st.text(analiza)
+                
+                docx_file = create_word_file(dane, analiza)
+                st.download_button("📥 Pobierz pełny raport (Word)", data=docx_file, file_name="raport_skanowania.docx")
+            else:
+                st.error("Nie wykryto kodu qr ani kreskowego na tym zdjęciu. Spróbuj przybliżyć lub użyć wyraźniejszego zdjęcia.")
+        except Exception as e:
+            st.error(f"Wystąpił techniczny problem z tym plikiem: {e}")
 
 # --- Zakładka 2: Generator ---
 with tab2:
