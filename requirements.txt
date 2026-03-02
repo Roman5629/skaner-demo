@@ -1,5 +1,8 @@
 streamlit
 opencv-python-headless
-numpy
 pyzbar
 python-docx
+numpy
+qrcode
+Pillow
+requests
