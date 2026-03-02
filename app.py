@@ -65,7 +65,7 @@ with tab1:
             codes = decode(img_array)
 
             if codes:
-                # Wymuszanie polskich znaków na stronie internetowej
+                # KULOODPORNE ODCZYTYWANIE POLSKICH ZNAKÓW
                 surowe_bajty = codes[0].data
                 try:
                     dane = surowe_bajty.decode("utf-8")
@@ -98,14 +98,15 @@ with tab1:
 # --- Zakładka 2: Generator ---
 with tab2:
     st.header("Wygeneruj własny kod qr")
-    tekst_do_kodu = st.text_area("Wpisz tekst (polskie znaki są obsługiwane), link lub adres portfela:", height=100)
+    tekst_do_kodu = st.text_area("Wpisz tekst (polskie znaki są w pełni obsługiwane), link lub adres portfela:", height=100)
     
     if st.button("🛠️ Generuj kod"):
         if tekst_do_kodu.strip() == "":
             st.warning("Musisz wpisać jakiś tekst!")
         else:
             qr = qrcode.QRCode(version=1, box_size=10, border=4)
-            qr.add_data(tekst_do_kodu)
+            # KLUCZOWA POPRAWKA: Wymuszamy polskie znaki przy tworzeniu obrazka!
+            qr.add_data(tekst_do_kodu.encode('utf-8'))
             qr.make(fit=True)
             img = qr.make_image(fill_color="black", back_color="white")
             
